@@ -1,42 +1,44 @@
+const chalk = require("chalk")
 const express = require("express")
 const port = 3000
-
+const path = require("path")
+const ejsLayouts = require("express-ejs-layouts")
 const app = express()
 
-const users = [
-	{ id: 1, name: "Patryk", email: "patryk@o2.pl" },
-	{ id: 2, name: "Sara", email: "sara@o2.pl" },
-	{ id: 3, name: "Adam", email: "adam@o2.pl" },
-	{ id: 4, name: "Marcin", email: "marcin@o2.pl" },
-]
+// view engine
+app.set("view engine", "ejs")
+app.set("views", path.join(__dirname + "/views"))
+// set layout
+app.use(ejsLayouts)
+app.set("layout", "layouts/main")
 
 app.get("/", (req, res) => {
-	res.send(`Strona główna`)
+	res.render("pages/home", {
+		title: "Strona główna",
+	})
 })
-app.get("/kontakt", (req, res) => {
-	res.send(`Zapraszamy do kontaktu`)
-})
-app.get("/profile", (req, res) => {
-	let html = `Znaleziono ${users.length} profile </br>`
-	users.forEach(
-		user =>
-			(html += `<a href="/profile/${user.id}">${user.name} id:${user.id}</a></br>`)
-	)
-	res.send(html)
-})
-app.get("/profile/:id/:mode?", (req, res) => {
-	const { id, mode } = req.params
-	const user = users.find(x => x.id === parseInt(id))
 
-	if (!user) {
-		return res.send(`nie ma takiego uzytkownika`)
-	}
-	let html = `Dane użytkownika: imię:${user.name}`
+app.get("/firmy/:name", (req, res) => {
+	const { name } = req.params
+	const companies = [
+		{ slug: "tworcastron", name: "Tworca Stron.pl" },
+		{ slug: "brukmode", name: "Bruk Mode" },
+	]
 
-	if (mode && mode === `szczegoly`) {
-		html += `, id:${user.id}, email: ${user.email}`
-	}
-	res.send(html)
+	const company = companies.find(x => x.slug === name)
+
+	res.render("pages/company", {
+		name: company?.name,
+		companies,
+		title: company?.name ?? "Brak wyników",
+	})
+})
+
+app.get("*", (req, res) => {
+	res.render("errors/404", {
+		title: "Nie znaleziono",
+		layout: "layouts/minimalistic",
+	})
 })
 
 app.listen(port)
